@@ -1,1 +1,1 @@
-Trabalho do primeiro semestre TEC PARA A INTERNET 2
+Este projeto possui tela para inserir os dados do usuario (cpf e senha) que são armazenados no banco de dados mysql disponibilizado por acesso ao XAMP, validação de ambos e proteção contra inject SQL nas tela posterior que possui opções de cadastro, inserção e alteração dos dados previamente inseridos com as mesmas proteções e validações.
