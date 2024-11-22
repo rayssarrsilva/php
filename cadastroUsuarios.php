@@ -1,6 +1,41 @@
 <?php 
 include("valida.php");
+include("conexao.php");
+
+// Verificação se o formulário foi enviado
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $cpf = $_POST["cpf"];
+    $nome = $_POST["nome"];
+    $senha = $_POST["senha"];
+
+    // Verificação do CPF
+    if (!preg_match('/^\d{11}$/', $cpf)) {
+        echo "O CPF deve conter exatamente 11 dígitos.";
+        exit;
+    }
+
+    // Verificação da senha usando regex
+    if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{6,}$/', $senha)) {
+        echo "A senha deve ter pelo menos 6 caracteres, incluindo uma letra maiúscula, uma letra minúscula, um número e um caractere especial.";
+        exit;
+    }
+
+    // Inserir usuário no banco de dados
+    $sql = "INSERT INTO usuarios (cpf, nome, senha) VALUES (?, ?, ?)";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("sss", $cpf, $nome, $senha);
+    
+    if ($stmt->execute()) {
+        echo "Usuário inserido com sucesso!";
+    } else {
+        echo "Erro ao inserir o usuário.";
+    }
+
+    $stmt->close();
+}
+
 ?>
+
 <html>
 <head>
     <title>Prncipal</title>
