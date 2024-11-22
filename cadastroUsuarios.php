@@ -94,6 +94,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <tr>
                     <form method="post" action="alterarUsuario.php"> 
                         <input type="hidden" name="cpfAnterior" value="<?=$row['cpf'];?>">
+                        <?php echo "<script>alert('Usuário alterado com sucesso!');</script>"; ?>
                         <td>
                             <input type="text" name="nome" value="<?=$row['nome'];?>">
                         </td>

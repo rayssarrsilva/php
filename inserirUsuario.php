@@ -5,13 +5,6 @@ $cpf = $_POST["cpf"];
 $nome = $_POST["nome"];
 $senha = $_POST["senha"];
 
-
-$sql = "insert into usuarios (cpf,nome,senha) values('$cpf','$nome','$senha') ";
-if(!$resultado = $conn->query($sql)){
-    die("erro");
-}
-header("Location: cadastroUsuarios.php");
-
 // Validação do CPF usando regex (apenas números, 11 dígitos)
 if (!preg_match("/^\d{11}$/", $cpf)) {
     die("CPF inválido. O CPF deve conter apenas 11 dígitos.");
