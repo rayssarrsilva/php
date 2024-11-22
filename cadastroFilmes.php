@@ -1,37 +1,41 @@
 <?php 
-include("valida.php");
-include("conexao.php");
+include("valida.php"); // Verifica se o usuário está autenticado
+include("conexao.php"); // Conexão com o banco de dados
 
 // Variável para armazenar erros
 $erro = "";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $cpf = $_POST["cpf"];
+    // Coleta dados do formulário
     $nome = $_POST["nome"];
-    $senha = $_POST["senha"];
-    $genero = isset($_POST["genero"]) ? $_POST["genero"] : ""; // Garante que o gênero seja definido
+    $ano = $_POST["ano"];
+    $genero = isset($_POST["genero"]) ? $_POST["genero"] : ""; // Garantir que o gênero seja definido
 
-    // Verificação do CPF
-    if (!preg_match('/^\d{11}$/', $cpf)) {
-        $erro = "O CPF deve conter exatamente 11 dígitos.";
+    // Verificação de erros
+    if (empty($nome)) {
+        $erro = "O nome do filme é obrigatório.";
     }
 
-    // Verificação da senha usando regex
-    if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{6,}$/', $senha)) {
-        $erro = "A senha deve ter pelo menos 6 caracteres, incluindo uma letra maiúscula, uma letra minúscula, um número e um caractere especial.";
+    if (!preg_match('/^\d{4}$/', $ano)) {
+        $erro = "O ano deve ter exatamente 4 dígitos.";
     }
 
-    // Se não houver erro, insere o usuário no banco
+    if (empty($genero)) {
+        $erro = "O gênero é obrigatório.";
+    }
+
+    // Se não houver erro, insere o filme no banco
     if (empty($erro)) {
-        // Inserir usuário no banco de dados, incluindo o código do gênero (que foi selecionado)
-        $sql = "INSERT INTO usuarios (cpf, nome, senha, genero) VALUES (?, ?, ?, ?)";
+        $sql = "INSERT INTO filmes (nome, ano, genero) VALUES (?, ?, ?)";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("ssss", $cpf, $nome, $senha, $genero);
+        $stmt->bind_param("sss", $nome, $ano, $genero);
 
         if ($stmt->execute()) {
-            echo "Usuário inserido com sucesso!";
+            // Redireciona para evitar reenvio de formulário e mostrar sucesso
+            header("Location: cadastroFilmes.php?success=1");
+            exit; // Para garantir que o script pare aqui e evite qualquer saída adicional
         } else {
-            $erro = "Erro ao inserir o usuário.";
+            $erro = "Erro ao inserir o filme: " . $stmt->error;
         }
 
         $stmt->close();
@@ -41,7 +45,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <html>
 <head>
-    <title>Cadastro de filmes</title>
+    <title>Cadastro de Filmes</title>
 </head>
 <body>
 
@@ -60,19 +64,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <h2>Menu</h2>
         <p><a href="cadastroUsuarios.php"><font color="black">Cadastrar Usuários</font></a></p>
         <p><a href="cadastroFilmes.php"><font color="black">Cadastrar Filmes</font></a></p>
-        <p>Item 3</p>
     </div>
 
     <div style="background-color: #ddd; min-height: 400px; width: 600px; float:left">
-        <h2>Manutenção de usuários</h2>
-        <h3>Criar novo usuário</h3>
+        <h2>Cadastro de Filme</h2>
         
         <?php if ($erro != "") { ?>
             <!-- Exibe o erro antes do formulário -->
             <div style="color: red;"><?= $erro; ?></div>
         <?php } ?>
 
-        <form method="post" action="inserirUsuario.php">
+        <?php if (isset($_GET['success']) && $_GET['success'] == 1) { ?>
+            <!-- Exibe uma mensagem de sucesso após o redirecionamento -->
+            <div style="color: green;">Filme inserido com sucesso!</div>
+        <?php } ?>
+
+        <!-- Formulário para inserir filme -->
+        <form method="post" action="cadastroFilmes.php">
             NOME: <input type="text" name="nome" id="nome" value="<?= isset($nome) ? $nome : ''; ?>"><br>
             ANO: <input type="text" name="ano" id="ano" value="<?= isset($ano) ? $ano : ''; ?>"><br>
             GENERO: 
@@ -80,14 +88,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <option value="">Selecione um gênero</option>
                 <?php 
                     // Consulta os gêneros ativos
-                    $sql = "SELECT * FROM generos WHERE status = 1"; // Filtra apenas os gêneros ativos
-                    if(!$resultado = $conn->query($sql)){
+                    $sql = "SELECT * FROM generos WHERE status = 1";
+                    $resultado = $conn->query($sql);
+                    if(!$resultado){
                         die("Erro ao buscar gêneros.");
                     }
                     while($row = $resultado->fetch_assoc()){
                 ?>
                     <option value="<?=$row['generos'];?>" <?= (isset($genero) && $genero == $row['generos']) ? 'selected' : ''; ?>>
-                        <?=$row['descricao'];?> <!-- Exibe a descrição do gênero -->
+                        <?=$row['descricao'];?>
                     </option>
                 <?php
                     }
@@ -98,19 +107,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         
         <br><br><hr><br><br>
         <?php
-            // Consulta para exibir os usuários
-            include("conexao.php");
+            // Consulta para exibir os filmes cadastrados com o nome do gênero
+            $sql = "SELECT f.id, f.nome, f.ano, g.descricao AS genero
+                    FROM filmes f
+                    LEFT JOIN generos g ON f.genero = g.generos";  // LEFT JOIN para pegar o nome do gênero
+            $resultado = $conn->query($sql);
 
-            $sql = "SELECT nome, cpf, senha FROM usuarios";
-            if(!$resultado = $conn->query($sql)){
-                die("Erro ao consultar usuários.");
+            // Verifique se a consulta retornou algum erro
+            if(!$resultado){
+                die("Erro ao consultar filmes: " . $conn->error);  // Exibe o erro caso ocorra
             }
         ?>
         <table>
             <tr>
                 <td>Nome</td>
-                <td>CPF</td>
-                <td>Senha</td>
+                <td>Ano</td>
+                <td>Gênero</td>
                 <td>Alterar</td>
                 <td>Apagar</td>
             </tr>
@@ -119,17 +131,31 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         while($row = $resultado->fetch_assoc()){
         ?>
             <tr>
-                <form method="post" action="alterarUsuario.php"> 
-                    <input type="hidden" name="cpfAnterior" value="<?=$row['cpf'];?>">
+                <form method="post" action="alterarFilme.php"> 
+                    <td><input type="text" name="nome" value="<?=$row['nome'];?>"></td>
+                    <td><input type="text" name="ano" value="<?=$row['ano'];?>"></td>
                     <td>
-                        <input type="text" name="nome" value="<?=$row['nome'];?>">
+                        <select name="genero">
+                            <option value="">Selecione um gênero</option>
+                            <?php 
+                                // Consulta os gêneros ativos para preencher o select na alteração
+                                $sql_generos = "SELECT * FROM generos WHERE status = 1";
+                                $resultado_generos = $conn->query($sql_generos);
+                                while($g = $resultado_generos->fetch_assoc()){
+                            ?>
+                                <option value="<?=$g['generos'];?>" <?= ($g['generos'] == $row['genero']) ? 'selected' : ''; ?>>
+                                    <?=$g['descricao'];?>
+                                </option>
+                            <?php
+                                }
+                            ?>
+                        </select>
                     </td>
-                    <td><input type="text" name="cpf" value="<?=$row['cpf'];?>"></td>
-                    <td><input type="text" name="senha" value="<?=$row['senha'];?>"></td>
+                    <input type="hidden" name="id_filme" value="<?=$row['id'];?>">
                     <td><input type="submit" value="Alterar"></td>
                 </form>
-                <form method="post" action="apagarUsuario.php">
-                    <input type="hidden" name="cpf" value="<?=$row['cpf'];?>">
+                <form method="post" action="apagarFilme.php">
+                    <input type="hidden" name="id_filme" value="<?=$row['id'];?>">
                     <td><input type="submit" value="Apagar"></td>
                 </form>
             </tr>
@@ -142,5 +168,3 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 </body>
 </html>
-
-
