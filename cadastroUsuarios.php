@@ -85,6 +85,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <td>cpf</td>
                     <td>senha</td>
                     <td>alterar</td>
+                    <td>apagar</td>
                 </tr>
             
             <?php
@@ -99,6 +100,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <td><input type="text" name="cpf" value="<?=$row['cpf'];?>"></td>
                         <td><input type="text" name="senha" value="<?=$row['senha'];?>"></td>
                         <td><input type="submit" value="alterar"></td>
+                    </form>
+                    <form method="post" action="apagarUsuario.php">
+                        <input type="hidden" name="cpf" value="<?=$row['cpf'];?>">
+                        <td><input type="submit" value="apagar"></td>
                     </form>
                 </tr>
                 <?php

@@ -18,12 +18,26 @@ if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{6,}$/', $senha)) {
     exit;
 }
 
-$sql = "update usuarios set cpf = '$cpf',
-                            senha = '$senha',
-                            nome = '$nome'
-        where cpf= '$cpfAnterior'";
+$sql = "update usuarios set cpf = ?,
+                            senha = ?,
+                            nome = ?
+        where cpf= ?";
+    $stmt = $conn->prepare($sql);
 
-if(!$resultado = $conn->query($sql)){
-    die("erro");
-}
-header("Location: cadastroUsuarios.php");
+    if ($stmt) {
+        // Vincular parâmetros
+        $stmt->bind_param("ssss", $cpf, $senha, $nome, $cpfAnterior);
+
+        // Executar a consulta
+        if ($stmt->execute()) {
+            header("Location: cadastroUsuarios.php");
+            exit; // Adiciona exit após o redirecionamento
+        } else {
+            die("Erro ao atualizar o usuário.");
+        }
+
+        $stmt->close();
+    } else {
+        die("Erro ao preparar a consulta.");
+    }
+?>
