@@ -6,7 +6,6 @@ $nome = $_POST["nome"];
 $senha = $_POST["senha"];
 $cpfAnterior = $_POST["cpfAnterior"];
 
-
 if (!preg_match('/^\d{11}$/', $cpf)) {
     echo "O CPF deve conter exatamente 11 dígitos.";
     exit;
@@ -40,4 +39,5 @@ $sql = "update usuarios set cpf = ?,
     } else {
         die("Erro ao preparar a consulta.");
     }
-?>
+
+header("Location: cadastroUsuarios.php");
