@@ -21,6 +21,7 @@ include("valida.php");
     <div id="menu" style="width: 200px; background-color: #f4f4f4; min-height: 400px; float: left;">
         <h2>Menu</h2>
         <p><a href="cadastroUsuarios.php"><font color="black">Cadastrar Usuários</font></a></p>
+        <p><a href="cadastroFilmes.php"><font color="black">Cadastrar Filmes</font></a></p>
         <p>Item 2</p>
         <p>Item 3</p>
     </div>
