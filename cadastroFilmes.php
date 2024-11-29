@@ -7,51 +7,38 @@ $erro = "";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Coleta dados do formulário
-    $descricao = $_POST["descricao"];
+    $nome = $_POST["nome"];
     $ano = $_POST["ano"];
     $genero = isset($_POST["genero"]) ? $_POST["genero"] : ""; // Garantir que o gênero seja definido
-    $titulo = $_POST["titulo"]; // Considerando que o título é uma coluna adicional
 
     // Verificação de erros
-    if (empty($descricao)) {
-        $erro .= "A descrição do filme é obrigatória.<br>";
+    if (empty($nome)) {
+        $erro = "O nome do filme é obrigatório.";
     }
 
     if (!preg_match('/^\d{4}$/', $ano)) {
-        $erro .= "O ano deve ter exatamente 4 dígitos.<br>";
+        $erro = "O ano deve ter exatamente 4 dígitos.";
     }
 
     if (empty($genero)) {
-        $erro .= "O gênero é obrigatório.<br>";
-    }
-
-    if (empty($titulo)) {
-        $erro .= "O título do filme é obrigatório.<br>";
+        $erro = "O gênero é obrigatório.";
     }
 
     // Se não houver erro, insere o filme no banco
     if (empty($erro)) {
-        // Preparação da consulta
-        $sql = "INSERT INTO filmes (descricao, ano, genero, titulo) VALUES (?, ?, ?, ?)";
+        $sql = "INSERT INTO filmes (nome, ano, genero) VALUES (?, ?, ?)";
         $stmt = $conn->prepare($sql);
+        $stmt->bind_param("sss", $nome, $ano, $genero);
 
-        // Verifica se houve erro ao preparar a consulta
-        if (!$stmt) {
-            $erro = "Erro ao preparar a consulta: " . $conn->error;
+        if ($stmt->execute()) {
+            // Redireciona para evitar reenvio de formulário e mostrar sucesso
+            header("Location: cadastroFilmes.php?success=1");
+            exit; // Para garantir que o script pare aqui e evite qualquer saída adicional
         } else {
-            // Bind dos parâmetros e execução
-            $stmt->bind_param("ssis", $descricao, $ano, $genero, $titulo);
-
-            if ($stmt->execute()) {
-                // Redireciona para evitar reenvio de formulário e mostrar sucesso
-                header("Location: cadastroFilmes.php?success=1");
-                exit; // Para garantir que o script pare aqui e evite qualquer saída adicional
-            } else {
-                $erro = "Erro ao inserir o filme: " . $stmt->error;
-            }
-
-            $stmt->close();
+            $erro = "Erro ao inserir o filme: " . $stmt->error;
         }
+
+        $stmt->close();
     }
 }
 ?>
@@ -65,17 +52,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <div style="width: 800px; margin: 0 auto;">
     <div style="min-height: 100px; width: 100%; background-color: #4CAF50;">
         <div style="width: 50%; float:left">
-            <?php if (isset($_SESSION['nome'])) { ?>
-                <span style="padding-left: 10px;">Olá <?= $_SESSION['nome']; ?></span>
-            <?php } else { ?>
-                <span>Usuário não autenticado.</span>
-            <?php } ?>
+            <span style="padding-left: 10px;">Olá <?=$_SESSION['nome'];?></span>
         </div>
 
         <div style="width: 50%; float:left; text-align:right;">
-            <span style="background-color:blue; margin-right:10px;"> 
-                <a href="sair.php"><font color="black">SAIR</font></a>
-            </span>
+            <span style="background-color:blue; margin-right:10px;"> <a href="sair.php"><font color="black">SAIR</font></a></span>
         </div>
     </div>
     
@@ -100,10 +81,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         <!-- Formulário para inserir filme -->
         <form method="post" action="cadastroFilmes.php">
-            Descrição: <input type="text" name="descricao" id="descricao" value="<?= isset($descricao) ? $descricao : ''; ?>"><br>
-            Ano: <input type="text" name="ano" id="ano" value="<?= isset($ano) ? $ano : ''; ?>"><br>
-            Título: <input type="text" name="titulo" id="titulo" value="<?= isset($titulo) ? $titulo : ''; ?>"><br>
-            Gênero: 
+            NOME: <input type="text" name="nome" id="nome" value="<?= isset($nome) ? $nome : ''; ?>"><br>
+            ANO: <input type="text" name="ano" id="ano" value="<?= isset($ano) ? $ano : ''; ?>"><br>
+            GENERO: 
             <select name="genero">
                 <option value="">Selecione um gênero</option>
                 <?php 
@@ -111,13 +91,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $sql = "SELECT * FROM generos WHERE status = 1";
                     $resultado = $conn->query($sql);
                     if(!$resultado){
-                        error_log("Erro ao buscar gêneros: " . $conn->error);
-                        echo "Erro ao buscar gêneros. Tente novamente mais tarde.";
-                        exit;
+                        die("Erro ao buscar gêneros.");
                     }
                     while($row = $resultado->fetch_assoc()){
                 ?>
-                    <option value="<?=$row['genero'];?>" <?=(isset($genero) && $genero == $row['genero']) ? 'selected' : '';?>>
+                    <option value="<?=$row['generos'];?>" <?= (isset($genero) && $genero == $row['generos']) ? 'selected' : ''; ?>>
                         <?=$row['descricao'];?>
                     </option>
                 <?php
@@ -130,26 +108,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <br><br><hr><br><br>
         <?php
             // Consulta para exibir os filmes cadastrados com o nome do gênero
-            $sql = "SELECT f.filme, f.descricao, f.ano, f.titulo, g.descricao AS genero
+            $sql = "SELECT f.id, f.nome, f.ano, g.descricao AS genero
                     FROM filmes f
-                    LEFT JOIN generos g ON f.genero = g.genero";  // LEFT JOIN para pegar o nome do gênero
+                    LEFT JOIN generos g ON f.genero = g.generos";  // LEFT JOIN para pegar o nome do gênero
             $resultado = $conn->query($sql);
 
             // Verifique se a consulta retornou algum erro
             if(!$resultado){
-                error_log("Erro ao consultar filmes: " . $conn->error);
-                echo "Erro ao consultar filmes. Tente novamente mais tarde.";
-                exit;
+                die("Erro ao consultar filmes: " . $conn->error);  // Exibe o erro caso ocorra
             }
         ?>
-        <table border="1" style="width: 100%; margin-top: 20px;">
+        <table>
             <tr>
-                <th>Descrição</th>
-                <th>Ano</th>
-                <th>Título</th>
-                <th>Gênero</th>
-                <th>Alterar</th>
-                <th>Apagar</th>
+                <td>Nome</td>
+                <td>Ano</td>
+                <td>Gênero</td>
+                <td>Alterar</td>
+                <td>Apagar</td>
             </tr>
         
         <?php
@@ -157,19 +132,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         ?>
             <tr>
                 <form method="post" action="alterarFilme.php"> 
-                    <td><input type="text" name="descricao" value="<?=$row['descricao'];?>"></td>
+                    <td><input type="text" name="nome" value="<?=$row['nome'];?>"></td>
                     <td><input type="text" name="ano" value="<?=$row['ano'];?>"></td>
-                    <td><input type="text" name="titulo" value="<?=$row['titulo'];?>"></td>
                     <td>
                         <select name="genero">
                             <option value="">Selecione um gênero</option>
                             <?php 
                                 // Consulta os gêneros ativos para preencher o select na alteração
-                                $sql_genero = "SELECT * FROM generos WHERE status = 1";
-                                $resultado_genero = $conn->query($sql_genero);
-                                while($g = $resultado_genero->fetch_assoc()){
+                                $sql_generos = "SELECT * FROM generos WHERE status = 1";
+                                $resultado_generos = $conn->query($sql_generos);
+                                while($g = $resultado_generos->fetch_assoc()){
                             ?>
-                                <option value="<?=$g['genero'];?>" <?= ($g['genero'] == $row['genero']) ? 'selected' : ''; ?>>
+                                <option value="<?=$g['generos'];?>" <?= ($g['generos'] == $row['genero']) ? 'selected' : ''; ?>>
                                     <?=$g['descricao'];?>
                                 </option>
                             <?php
@@ -177,11 +151,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             ?>
                         </select>
                     </td>
-                    <input type="hidden" name="filme" value="<?=$row['filme'];?>">
+                    <input type="hidden" name="id_filme" value="<?=$row['id'];?>">
                     <td><input type="submit" value="Alterar"></td>
                 </form>
                 <form method="post" action="apagarFilme.php">
-                    <input type="hidden" name="filme" value="<?=$row['filme'];?>">
+                    <input type="hidden" name="id_filme" value="<?=$row['id'];?>">
                     <td><input type="submit" value="Apagar"></td>
                 </form>
             </tr>
