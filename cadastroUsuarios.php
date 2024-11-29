@@ -1,6 +1,7 @@
 <?php 
 include("valida.php");
 include("conexao.php");
+include("validacaoVazio.php");
 
 // Verificação se o formulário foi enviado
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -58,7 +59,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <h2>Menu</h2>
         <p><a href="cadastroUsuarios.php"><font color="black">Cadastrar Usuários</font></a></p>
         <p><a href="cadastroFilmes.php"><font color="black">Cadastrar Filmes</font></a></p>
-        <p>Item 3</p>
+        <p><a href="cadastroGeneros.php"><font color="black">Cadastrar Gêneros</font></a></p>
     </div>
 
     <div style="   background-color: #ddd; min-height: 400px; width: 600px; float:left">

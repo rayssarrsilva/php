@@ -1,6 +1,7 @@
 <?php 
 include("valida.php"); // Verifica se o usuário está autenticado
 include("conexao.php"); // Conexão com o banco de dados
+include("validacaoVazio.php");
 
 // Variável para armazenar erros
 $erro = "";
@@ -64,6 +65,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <h2>Menu</h2>
         <p><a href="cadastroUsuarios.php"><font color="black">Cadastrar Usuários</font></a></p>
         <p><a href="cadastroFilmes.php"><font color="black">Cadastrar Filmes</font></a></p>
+        <p><a href="cadastroGeneros.php"><font color="black">Cadastrar Generos</font></a></p>
     </div>
 
     <div style="background-color: #ddd; min-height: 400px; width: 600px; float:left">

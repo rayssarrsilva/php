@@ -1,5 +1,6 @@
 <?php
 include("conexao.php");
+include("validacaoVazio.php");
 
 $cpf = $_POST["cpf"];
 $nome = $_POST["nome"];
